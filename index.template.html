@@ -331,24 +331,21 @@ function render(){
     main.innerHTML = `
     <div class="card" id="frontCard" style="cursor:pointer">
       <div class="cardtop">
-        <div class="sentence">${esc(c.es)}</div>
-        <span class="tap">tap card to reveal · ▶ replays audio</span>
+        <div class="trans" style="margin:0">${esc(c.en)}</div>
+        <span class="tap">tap card to reveal the Spanish</span>
       </div>
-      <div class="playrow"><button class="play" id="playBtn" title="Play (R)">▶</button></div>
       <div class="controls"><button class="show" id="showBtn">Show answer</button></div>
     </div>`;
-    document.getElementById('frontCard').onclick = e=>{ if(!e.target.closest('.play')) flip(); };
-    document.getElementById('playBtn').onclick = ()=> playCard(c, document.getElementById('playBtn'));
-    if(state.autoplay!==false) playCard(c, document.getElementById('playBtn'));
+    document.getElementById('frontCard').onclick = ()=> flip();
   } else {
     main.innerHTML = `
     <div class="card">
-      <div class="cardtop" style="padding-bottom:6px">
-        <div class="sentence" style="font-size:24px">${esc(c.es)}</div>
+      <div class="cardtop">
+        <div class="sentence">${esc(c.es)}</div>
       </div>
       <div class="playrow"><button class="play" id="playBtn" title="Play (R)">▶</button></div>
       <div class="divider"></div>
-      <div class="trans">${esc(c.en)}</div>
+      <div class="trans" style="font-size:18px;color:var(--muted)">${esc(c.en)}</div>
       <div class="controls">
         <button class="grade g-again" data-q="0">Again<small>&lt;1m</small></button>
         <button class="grade g-hard" data-q="1">Hard<small id="iv1"></small></button>
@@ -359,6 +356,7 @@ function render(){
     document.getElementById('playBtn').onclick = ()=> playCard(c, document.getElementById('playBtn'));
     document.querySelectorAll('.grade').forEach(b=> b.onclick = ()=>{ grade(c, +b.dataset.q); nextCard(); });
     setIvPreview(c);
+    if(state.autoplay!==false) playCard(c, document.getElementById('playBtn'));   // play Spanish on reveal
   }
 }
 function setIvPreview(c){
@@ -380,7 +378,7 @@ document.addEventListener('keydown', e=>{
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return;
   if(overlayEl.classList.contains('open')){ if(e.key==='Escape') closeModal(); return; }
   if(e.code==='Space'){ e.preventDefault(); if(current && !flipped) flip(); }
-  else if(e.key==='r'||e.key==='R'){ if(current) playCard(current, document.getElementById('playBtn')); }
+  else if(e.key==='r'||e.key==='R'){ if(flipped && current) playCard(current, document.getElementById('playBtn')); }
   else if(flipped && current && ['1','2','3','4'].includes(e.key)){ grade(current, +e.key-1); nextCard(); }
 });
 
@@ -589,26 +587,24 @@ function startCram(set, label){
       modalBox.querySelector('#modalBody').innerHTML = `
         <div class="cramwrap" style="color:var(--muted);font-size:12px;margin-bottom:14px">${label} · ${i+1} / ${set.length}</div>
         <div class="card" style="box-shadow:none;border:none;background:transparent">
-          <div class="cardtop"><div class="sentence">${esc(c.es)}</div><span class="tap">tap to reveal</span></div>
-          <div class="playrow"><button class="play" id="cramPlay">▶</button></div>
+          <div class="cardtop"><div class="trans" style="margin:0">${esc(c.en)}</div><span class="tap">tap to reveal the Spanish</span></div>
           <div class="controls"><button class="show" id="cramShow">Show answer</button></div>
         </div>`;
       modalBox.querySelector('#cramShow').onclick=()=>{ flip=true; show(); };
-      modalBox.querySelector('#cramPlay').onclick=()=> playCard(c, modalBox.querySelector('#cramPlay'));
-      if(state.autoplay!==false) playCard(c, modalBox.querySelector('#cramPlay'));
     } else {
       modalBox.querySelector('#modalBody').innerHTML = `
         <div class="cramwrap" style="color:var(--muted);font-size:12px;margin-bottom:14px">${label} · ${i+1} / ${set.length}</div>
         <div class="card" style="box-shadow:none;border:none;background:transparent">
-          <div class="cardtop" style="padding-bottom:6px"><div class="sentence" style="font-size:24px">${esc(c.es)}</div></div>
+          <div class="cardtop"><div class="sentence">${esc(c.es)}</div></div>
           <div class="playrow"><button class="play" id="cramPlay">▶</button></div>
-          <div class="divider"></div><div class="trans">${esc(c.en)}</div>
+          <div class="divider"></div><div class="trans" style="font-size:18px;color:var(--muted)">${esc(c.en)}</div>
           <div class="controls">
             <button class="iconbtn" id="cramPrev" ${i===0?'disabled':''}>← Prev</button>
             <button class="iconbtn" id="cramNext">${i===set.length-1?'Done':'Next →'}</button>
           </div>
         </div>`;
       modalBox.querySelector('#cramPlay').onclick=()=> playCard(c, modalBox.querySelector('#cramPlay'));
+      if(state.autoplay!==false) playCard(c, modalBox.querySelector('#cramPlay'));   // play Spanish on reveal
       modalBox.querySelector('#cramPrev').onclick=()=>{ if(i>0){i--;flip=false;show();} };
       modalBox.querySelector('#cramNext').onclick=()=>{ if(i<set.length-1){i++;flip=false;show();} else openBrowse(); };
     }

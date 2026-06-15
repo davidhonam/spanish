@@ -1,7 +1,7 @@
 # Intermediate Spanish SRS
 
 A spaced-repetition study app for **7000 intermediate/advanced Spanish sentences**, each with
-native audio. Spanish → English recognition flashcards. Self-contained single page — no build
+native audio. English → Spanish production flashcards. Self-contained single page — no build
 step to *run*, no server, no account.
 
 Part of a family of SRS apps (see also [Mandarin](../mandarin) and [French](../french)).
@@ -24,9 +24,10 @@ Intermediate/Advanced Sentences w/ Audio"* Anki deck.
 
 ## Card format
 
-Each card tests **recognition**: a Spanish sentence is shown (and read aloud); you recall the
-English meaning, then reveal it. This is a sentence deck — there is no per-word vocabulary,
-part of speech, or definition; the sentence itself is the unit of study.
+Each card tests **production**: the English sentence is shown; you recall the Spanish, then
+reveal it — the Spanish sentence is displayed and read aloud (autoplay, toggleable). This is a
+sentence deck — there is no per-word vocabulary, part of speech, or definition; the sentence
+itself is the unit of study.
 
 ## Run it
 
