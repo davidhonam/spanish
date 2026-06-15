@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Spanish 7K SRS</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1115">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spanish SRS">
+<style>
+  :root{
+    --bg:#0f1115; --panel:#1a1d24; --panel2:#222632; --ink:#e8eaf0; --muted:#9aa3b2;
+    --accent:#f2a900; --good:#3ecf8e; --hard:#f2c14e; --again:#ff6b6b; --easy:#4cc9f0;
+    --line:#2a2f3a; --shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:radial-gradient(1200px 600px at 50% -10%, #2a2030 0%, var(--bg) 60%);
+    color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; min-height:100%;}
+  header{display:flex; align-items:center; gap:14px; position:sticky; top:0; z-index:5;
+    padding:calc(14px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) 14px calc(20px + env(safe-area-inset-left));
+    border-bottom:1px solid var(--line); background:rgba(15,17,21,.7); backdrop-filter:blur(8px);}
+  header h1{font-size:16px; margin:0; font-weight:600; letter-spacing:.3px}
+  header .sub{color:var(--muted); font-size:12px}
+  .spacer{flex:1}
+  .pill{font-size:12px; color:var(--muted); background:var(--panel2); border:1px solid var(--line);
+    padding:5px 10px; border-radius:999px; white-space:nowrap}
+  .pill b{color:var(--ink)}
+  button{font-family:inherit; cursor:pointer; border:none; border-radius:10px; transition:.12s transform,.12s filter; }
+  button:active{transform:translateY(1px)}
+  .iconbtn{background:var(--panel2); color:var(--muted); border:1px solid var(--line); padding:7px 11px; font-size:13px; border-radius:9px}
+  .iconbtn:hover{color:var(--ink); filter:brightness(1.15)}
+  main{flex:1; display:flex; align-items:center; justify-content:center; padding:24px 16px}
+  .card{width:min(620px,94vw); background:linear-gradient(180deg,var(--panel) 0%, #161922 100%);
+    border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
+  .cardtop{padding:36px 30px 10px; text-align:center}
+  .sentence{font-size:28px; font-weight:600; line-height:1.4; letter-spacing:.2px}
+  .tap{display:block; font-size:12px; color:var(--muted); font-weight:400; margin-top:18px; letter-spacing:.5px}
+  .playrow{display:flex; justify-content:center; padding:6px 0 2px}
+  .play{flex:0 0 auto; width:52px; height:52px; border-radius:50%; background:var(--panel2);
+    border:1px solid var(--line); color:var(--accent); font-size:20px; display:flex; align-items:center; justify-content:center}
+  .play:hover{filter:brightness(1.25)}
+  .play.playing{background:var(--accent); color:#1a1205; border-color:var(--accent)}
+  .trans{font-size:22px; color:var(--ink); margin:18px 30px 6px; text-align:center; font-weight:500}
+  .divider{height:1px; background:var(--line); margin:20px 0 0}
+  .controls{display:flex; gap:10px; padding:18px 22px 22px; justify-content:center; flex-wrap:wrap}
+  .show{background:var(--accent); color:#1a1205; font-size:16px; font-weight:700; padding:14px 40px; border-radius:12px}
+  .grade{flex:1; min-width:120px; max-width:150px; padding:13px 8px; font-size:14px; font-weight:600; color:#0f1115; text-align:center}
+  .grade small{display:block; font-weight:500; opacity:.8; font-size:11px; margin-top:2px}
+  .g-again{background:var(--again)} .g-hard{background:var(--hard)} .g-good{background:var(--good)} .g-easy{background:var(--easy)}
+  .empty{text-align:center; color:var(--muted)}
+  .empty h2{color:var(--ink); font-weight:600}
+  footer{display:flex; gap:14px; align-items:center; justify-content:center; padding:10px; color:var(--muted); font-size:12px; border-top:1px solid var(--line)}
+  .toolbar{display:flex; gap:8px; align-items:center}
+  select{background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-family:inherit; font-size:12px}
+  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--panel2);
+    border:1px solid var(--line); color:var(--ink); padding:10px 16px; border-radius:10px; box-shadow:var(--shadow); font-size:13px; opacity:0; pointer-events:none; transition:.2s}
+  .toast.show{opacity:1}
+  kbd{background:var(--panel2); border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px; font-size:11px; color:var(--muted)}
+  /* ---- overlay / modal ---- */
+  .overlay{position:fixed; inset:0; background:rgba(8,10,14,.72); backdrop-filter:blur(4px); display:none; align-items:flex-start; justify-content:center; z-index:20; padding:40px 16px; overflow:auto}
+  .overlay.open{display:flex}
+  .modal{width:min(760px,96vw); background:var(--panel); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); overflow:hidden; margin:auto}
+  .modal h2{margin:0; font-size:17px; font-weight:600}
+  .modalhead{display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel); z-index:2}
+  .modalhead .spacer{flex:1}
+  .closex{background:var(--panel2); color:var(--muted); border:1px solid var(--line); width:32px; height:32px; border-radius:8px; font-size:16px; line-height:1}
+  .closex:hover{color:var(--ink)}
+  .modalbody{padding:18px 20px 22px}
+  /* ---- stats ---- */
+  .statgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:8px}
+  .stat{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:14px}
+  .stat .n{font-size:26px; font-weight:700}
+  .stat .l{font-size:12px; color:var(--muted); margin-top:2px}
+  .stat .n.good{color:var(--good)} .stat .n.warn{color:var(--hard)} .stat .n.acc{color:var(--easy)}
+  .secttitle{font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin:22px 0 10px}
+  .bars{display:flex; align-items:flex-end; gap:4px; height:90px; padding-top:6px}
+  .bar{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; height:100%}
+  .bar .fill{width:100%; background:var(--accent); border-radius:4px 4px 0 0; min-height:2px; transition:.2s}
+  .bar.future .fill{background:var(--panel2); border:1px solid var(--accent)}
+  .bar .cap{font-size:9px; color:var(--muted); white-space:nowrap}
+  .bar .val{font-size:10px; color:var(--ink); font-weight:600}
+  .matbar{display:flex; height:22px; border-radius:6px; overflow:hidden; border:1px solid var(--line)}
+  .matbar > div{display:flex; align-items:center; justify-content:center; font-size:11px; color:#0f1115; font-weight:600}
+  /* ---- settings ---- */
+  .setrow{display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line)}
+  .setrow:last-child{border-bottom:none}
+  .setrow .lbl{flex:1}
+  .setrow .lbl b{display:block; font-size:14px}
+  .setrow .lbl span{font-size:12px; color:var(--muted)}
+  .setrow input[type=range]{width:160px}
+  .setrow .num{font-size:18px; font-weight:700; min-width:42px; text-align:right; color:var(--accent)}
+  /* ---- browse ---- */
+  .browsebar{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap}
+  .browsebar input[type=text]{flex:1; min-width:160px; background:var(--panel2); border:1px solid var(--line); color:var(--ink); border-radius:9px; padding:9px 12px; font-family:inherit; font-size:14px}
+  .browsecount{font-size:12px; color:var(--muted); margin:0 0 10px}
+  .blist{display:flex; flex-direction:column; gap:6px; max-height:none}
+  .brow{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:11px 13px; cursor:pointer}
+  .brow:hover{filter:brightness(1.12)}
+  .browtop{display:flex; align-items:flex-start; gap:10px}
+  .browtop .bes{font-size:15px; font-weight:600; flex:1; min-width:0}
+  .browtop .badge{margin-top:2px}
+  .badge{font-size:10px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); white-space:nowrap}
+  .badge.new{color:var(--accent); border-color:rgba(242,169,0,.4)}
+  .badge.learn{color:var(--hard); border-color:rgba(242,193,78,.4)}
+  .badge.mature{color:var(--good); border-color:rgba(62,207,142,.4)}
+  .badge.due{color:var(--again); border-color:rgba(255,107,107,.4)}
+  .bdetail{margin-top:10px; padding-top:10px; border-top:1px solid var(--line); display:none}
+  .brow.open .bdetail{display:block}
+  .bex{display:flex; gap:10px; align-items:center; padding:2px 0}
+  .bex .en{font-size:13px; color:var(--muted)}
+  .miniplay{flex:0 0 auto; width:34px; height:34px; border-radius:50%; background:var(--panel); border:1px solid var(--line); color:var(--accent); font-size:13px}
+  .cramwrap{text-align:center}
+  /* button icon/label: text on desktop, icon-only on mobile */
+  .iconbtn .bi{display:none} .iconbtn .bl{display:inline}
+  /* ---------- mobile ---------- */
+  @media (max-width:680px){
+    header{gap:8px 10px; flex-wrap:wrap;
+      padding:calc(9px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 9px calc(12px + env(safe-area-inset-left))}
+    header h1{font-size:15px}
+    .sub{font-size:11px}
+    .pill{font-size:11px; padding:4px 9px; order:3; flex-basis:100%}
+    .toolbar{gap:8px}
+    .iconbtn{min-height:42px; min-width:46px; padding:8px 12px; font-size:18px; display:flex; align-items:center; justify-content:center}
+    .iconbtn .bi{display:inline} .iconbtn .bl{display:none}
+    main{padding:14px 10px}
+    .card{border-radius:16px}
+    .cardtop{padding:26px 18px 8px}
+    .sentence{font-size:23px}
+    .trans{font-size:19px; margin:16px 12px 4px}
+    .play{width:56px; height:56px}
+    .controls{gap:8px; padding:16px 12px 20px}
+    .show{width:100%; padding:16px}
+    .grade{min-width:0; max-width:none; flex:1 1 calc(50% - 5px); padding:15px 6px; font-size:15px}
+    footer{display:none}
+    .overlay{padding:0; align-items:stretch}
+    .modal{width:100%; min-height:100%; border-radius:0; border:none; margin:0}
+    .modalhead{padding:calc(14px + env(safe-area-inset-top)) 16px 14px}
+    .modalbody{padding:14px 14px calc(24px + env(safe-area-inset-bottom))}
+    .closex{width:40px; height:40px; font-size:20px}
+    .statgrid{grid-template-columns:repeat(2,1fr); gap:10px}
+    .stat .n{font-size:22px}
+    .browsebar{gap:8px}
+    .browsebar input[type=text]{flex-basis:100%}
+    .setrow input[type=range]{width:130px}
+    .brow{padding:13px}
+    .miniplay{width:40px; height:40px}
+  }
+  @media (hover:none){ .iconbtn, .play, .miniplay, .grade, .show{ -webkit-tap-highlight-color:transparent } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Intermediate <span style="color:var(--accent)">Spanish</span></h1>
+  <div class="pill" id="stats"></div>
+  <div class="sub" id="streak"></div>
+  <div class="spacer"></div>
+  <div class="toolbar">
+    <button class="iconbtn" id="browseBtn" title="Browse & search all sentences"><span class="bi">🔍</span><span class="bl">Browse</span></button>
+    <button class="iconbtn" id="statsBtn" title="Statistics"><span class="bi">📊</span><span class="bl">Stats</span></button>
+    <button class="iconbtn" id="settingsBtn" title="Settings"><span class="bi">⚙</span><span class="bl">Settings</span></button>
+  </div>
+  <input type="file" id="importFile" accept="application/json" style="display:none">
+</header>
+
+<main id="main"></main>
+
+<footer>
+  <span class="kbdhint"><kbd>Space</kbd> flip · <kbd>1</kbd>-<kbd>4</kbd> grade · <kbd>R</kbd> replay audio</span>
+</footer>
+
+<div class="overlay" id="overlay"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script id="carddata" type="application/json">__CARDS__</script>
+<script>
+"use strict";
+const CARDS = JSON.parse(document.getElementById('carddata').textContent);
+const TOTAL = CARDS.length;
+const STORE_KEY = 'spanish_srs_v1';
+const DAY = 86400000;
+
+// ---------- persistence ----------
+let state = load();
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(STORE_KEY)); if(s && s.cards) return s; }catch(e){}
+  return fresh();
+}
+function fresh(){
+  const cards = {};
+  CARDS.forEach(c => cards[c.id] = {id:c.id, ease:2.5, intervalD:0, reps:0, due:0, lapses:0});
+  return {cards, lastVoice:null, speed:0.9, newPerDay:20, autoplay:true, log:{}, streak:{count:0, last:null}, sessionNew:0};
+}
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+// ---------- scheduling (SM-2 variant) ----------
+function newPerDay(){ return state.newPerDay ?? 20; }
+function now(){ return Date.now(); }
+function dayKey(ts){ return new Date(ts).toISOString().slice(0,10); }
+
+function dueQueue(){
+  const t = now();
+  const due = [], fresh = [];
+  for(const c of CARDS){
+    const s = state.cards[c.id];
+    if(s.reps === 0) fresh.push(c);
+    else if(s.due <= t) due.push(c);
+  }
+  due.sort((a,b)=> state.cards[a.id].due - state.cards[b.id].due);
+  const room = Math.max(0, newPerDay() - state.sessionNew);
+  return {due, fresh: fresh.slice(0, room), totalNew: fresh.length, totalDue: due.length};
+}
+
+function grade(card, q){ // q: 0 again,1 hard,2 good,3 easy
+  const s = state.cards[card.id];
+  const wasNew = s.reps === 0;
+  if(q === 0){
+    s.reps = Math.max(1, s.reps); s.lapses++;
+    s.ease = Math.max(1.3, s.ease - 0.2);
+    s.intervalD = 0; s.due = now() + 60*1000;
+  } else {
+    if(s.reps === 0){ s.intervalD = q===1?1:q===2?1:3; }
+    else if(s.reps === 1){ s.intervalD = q===1?2:q===2?3:5; }
+    else { const m = q===1?1.2:q===2?s.ease:s.ease*1.3; s.intervalD = Math.round(s.intervalD * m); }
+    if(q===1) s.ease = Math.max(1.3, s.ease - 0.15);
+    if(q===3) s.ease = s.ease + 0.15;
+    s.intervalD = Math.max(1, s.intervalD);
+    s.due = now() + s.intervalD * DAY;
+    s.reps++;
+  }
+  if(wasNew && q!==0){ state.sessionNew++; }
+  if(!state.log) state.log = {};
+  const k = dayKey(now());
+  const d = state.log[k] || (state.log[k] = {reviews:0, again:0});
+  d.reviews++; if(q===0) d.again++;
+  bumpStreak();
+  save();
+}
+function bumpStreak(){
+  const today = new Date().toDateString();
+  if(state.streak.last === today) return;
+  const y = new Date(Date.now()-DAY).toDateString();
+  state.streak.count = (state.streak.last === y) ? state.streak.count+1 : 1;
+  state.streak.last = today;
+}
+
+// ---------- TTS (fallback when an audio file is missing) ----------
+let voices = [], chosenVoice = null;
+function loadVoices(){
+  voices = speechSynthesis.getVoices().filter(v=>/es|spanish|español|castellano/i.test(v.lang+v.name));
+  let idx = voices.findIndex(v=>v.name===state.lastVoice);
+  if(idx<0) idx = voices.findIndex(v=>/es-ES|es-MX|Monica|Mónica|Paulina|Jorge|Juan/i.test(v.name+v.lang));
+  if(idx<0) idx = 0;
+  chosenVoice = voices[idx] || null;
+  const vs = document.getElementById('setVoice'); if(vs) fillVoiceSelect(vs);
+}
+function fillVoiceSelect(sel){
+  if(!voices.length){ sel.innerHTML='<option>No Spanish voice installed</option>'; return; }
+  sel.innerHTML = voices.map((v,i)=>`<option value="${i}"${v===chosenVoice?' selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  sel.onchange = e=>{ chosenVoice = voices[+e.target.value]; if(chosenVoice){ state.lastVoice = chosenVoice.name; save(); } };
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+let curUtter = null, curAudio = null;
+const AUDIO_DIR = 'audio/';   // s_<id>.mp3
+function stopAudio(){
+  speechSynthesis.cancel();
+  if(curAudio){ curAudio.pause(); curAudio = null; }
+  document.querySelectorAll('.play.playing,.miniplay.playing').forEach(b=>b.classList.remove('playing'));
+}
+function speak(text, btn){
+  if(!('speechSynthesis' in window)) return;
+  stopAudio();
+  const u = new SpeechSynthesisUtterance(text);
+  if(chosenVoice){ u.voice = chosenVoice; u.lang = chosenVoice.lang; } else { u.lang='es-ES'; }
+  u.rate = state.speed || 0.9;
+  if(btn){ btn.classList.add('playing'); u.onend = u.onerror = ()=>btn.classList.remove('playing'); }
+  curUtter = u; speechSynthesis.speak(u);
+}
+function playFile(file, fallbackText, btn){
+  stopAudio();
+  const a = new Audio(AUDIO_DIR + file);
+  a.playbackRate = state.speed || 0.9;
+  if(btn) btn.classList.add('playing');
+  const clear = ()=>{ if(btn) btn.classList.remove('playing'); };
+  a.onended = clear;
+  a.onerror = ()=>{ clear(); if(curAudio===a) curAudio=null; speak(fallbackText, btn); };
+  curAudio = a;
+  a.play().catch(()=>{ clear(); if(curAudio===a) curAudio=null; speak(fallbackText, btn); });
+}
+function playCard(c, btn){ playFile('s_'+c.id+'.mp3', c.es, btn); }
+
+// ---------- view ----------
+const main = document.getElementById('main');
+let queue = [], current = null, flipped = false;
+
+function refillQueue(){
+  const {due, fresh} = dueQueue();
+  queue = [...due, ...fresh];
+}
+function nextCard(){
+  flipped = false;
+  refillQueue();
+  const t = now();
+  queue = queue.filter(c => state.cards[c.id].reps===0 || state.cards[c.id].due <= t + 1);
+  current = queue[0] || null;
+  render();
+}
+
+function statsLine(){
+  const {totalDue} = dueQueue();
+  const learned = CARDS.filter(c=>state.cards[c.id].reps>0).length;
+  document.getElementById('stats').innerHTML =
+    'Due <b>'+totalDue+'</b> · New <b>'+Math.max(0,newPerDay()-state.sessionNew)+'</b> · Learned <b>'+learned+'</b>/'+TOTAL;
+  document.getElementById('streak').textContent = state.streak.count>0 ? '🔥 '+state.streak.count+'-day streak' : '';
+}
+
+function render(){
+  statsLine();
+  if(!current){
+    main.innerHTML = '<div class="empty"><h2>🎉 All caught up</h2><p>No cards due right now. Come back later, or your relapsed cards will reappear shortly.</p></div>';
+    return;
+  }
+  const c = current;
+  if(!flipped){
+    main.innerHTML = `
+    <div class="card" id="frontCard" style="cursor:pointer">
+      <div class="cardtop">
+        <div class="sentence">${esc(c.es)}</div>
+        <span class="tap">tap card to reveal · ▶ replays audio</span>
+      </div>
+      <div class="playrow"><button class="play" id="playBtn" title="Play (R)">▶</button></div>
+      <div class="controls"><button class="show" id="showBtn">Show answer</button></div>
+    </div>`;
+    document.getElementById('frontCard').onclick = e=>{ if(!e.target.closest('.play')) flip(); };
+    document.getElementById('playBtn').onclick = ()=> playCard(c, document.getElementById('playBtn'));
+    if(state.autoplay!==false) playCard(c, document.getElementById('playBtn'));
+  } else {
+    main.innerHTML = `
+    <div class="card">
+      <div class="cardtop" style="padding-bottom:6px">
+        <div class="sentence" style="font-size:24px">${esc(c.es)}</div>
+      </div>
+      <div class="playrow"><button class="play" id="playBtn" title="Play (R)">▶</button></div>
+      <div class="divider"></div>
+      <div class="trans">${esc(c.en)}</div>
+      <div class="controls">
+        <button class="grade g-again" data-q="0">Again<small>&lt;1m</small></button>
+        <button class="grade g-hard" data-q="1">Hard<small id="iv1"></small></button>
+        <button class="grade g-good" data-q="2">Good<small id="iv2"></small></button>
+        <button class="grade g-easy" data-q="3">Easy<small id="iv3"></small></button>
+      </div>
+    </div>`;
+    document.getElementById('playBtn').onclick = ()=> playCard(c, document.getElementById('playBtn'));
+    document.querySelectorAll('.grade').forEach(b=> b.onclick = ()=>{ grade(c, +b.dataset.q); nextCard(); });
+    setIvPreview(c);
+  }
+}
+function setIvPreview(c){
+  const fmt = d => d===0?'<1d': d<30? d+'d' : Math.round(d/30)+'mo';
+  const s = state.cards[c.id];
+  const peek = q=>{
+    let iv; if(q===1){iv = s.reps<=1?(s.reps===0?1:2):Math.round(s.intervalD*1.2);}
+    else if(q===2){iv = s.reps===0?1:s.reps===1?3:Math.round(s.intervalD*s.ease);}
+    else {iv = s.reps===0?3:s.reps===1?5:Math.round(s.intervalD*s.ease*1.3);}
+    return Math.max(1,iv); };
+  const e1=document.getElementById('iv1'), e2=document.getElementById('iv2'), e3=document.getElementById('iv3');
+  if(e1) e1.textContent=fmt(peek(1)); if(e2) e2.textContent=fmt(peek(2)); if(e3) e3.textContent=fmt(peek(3));
+}
+function flip(){ flipped = true; render(); }
+function esc(s){ return (s||'').replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+// ---------- controls ----------
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return;
+  if(overlayEl.classList.contains('open')){ if(e.key==='Escape') closeModal(); return; }
+  if(e.code==='Space'){ e.preventDefault(); if(current && !flipped) flip(); }
+  else if(e.key==='r'||e.key==='R'){ if(current) playCard(current, document.getElementById('playBtn')); }
+  else if(flipped && current && ['1','2','3','4'].includes(e.key)){ grade(current, +e.key-1); nextCard(); }
+});
+
+// export / import / reset
+function exportProgress(){
+  const blob = new Blob([JSON.stringify(state)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'spanish-srs-progress-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  toast('Progress exported');
+}
+document.getElementById('importFile').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try{ const s=JSON.parse(r.result); if(!s.cards) throw 0;
+    CARDS.forEach(c=>{ if(!s.cards[c.id]) s.cards[c.id]={id:c.id,ease:2.5,intervalD:0,reps:0,due:0,lapses:0}; });
+    state=s; save(); loadVoices(); closeModal(); nextCard(); toast('Progress imported');
+  }catch(err){ toast('Invalid file'); } };
+  r.readAsText(f); e.target.value='';
+};
+function importProgress(){ document.getElementById('importFile').click(); }
+function resetProgress(){
+  if(confirm('Reset all progress? This cannot be undone (export first to keep a backup).')){
+    state = fresh(); save(); closeModal(); nextCard(); toast('Progress reset');
+  }
+}
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
+
+// ================= modal framework =================
+const overlayEl = document.getElementById('overlay');
+const modalBox = document.getElementById('modalBox');
+function openModal(title, bodyHtml){
+  modalBox.innerHTML =
+    '<div class="modalhead"><h2>'+title+'</h2><div class="spacer"></div><button class="closex" id="modalClose">×</button></div>'+
+    '<div class="modalbody" id="modalBody">'+bodyHtml+'</div>';
+  overlayEl.classList.add('open');
+  stopAudio();
+  document.getElementById('modalClose').onclick = closeModal;
+}
+function closeModal(){ overlayEl.classList.remove('open'); modalBox.innerHTML=''; statsLine(); }
+overlayEl.addEventListener('click', e=>{ if(e.target===overlayEl) closeModal(); });
+
+function cardStatus(c){
+  const s = state.cards[c.id];
+  if(s.reps===0) return {key:'new', label:'New'};
+  if(s.due <= now()) return {key:'due', label:'Due'};
+  if(s.intervalD >= 21) return {key:'mature', label:'Mature'};
+  return {key:'learn', label:'Learning'};
+}
+
+// ================= settings =================
+document.getElementById('settingsBtn').onclick = ()=>{
+  openModal('Settings', `
+    <div class="setrow">
+      <div class="lbl"><b>New cards per day</b><span>How many unseen sentences to introduce daily</span></div>
+      <input type="range" id="setNew" min="0" max="100" step="5" value="${newPerDay()}">
+      <div class="num" id="setNewN">${newPerDay()}</div>
+    </div>
+    <div class="setrow">
+      <div class="lbl"><b>Audio speed</b><span>Playback rate for Spanish audio</span></div>
+      <input type="range" id="setSpd" min="0.5" max="1" step="0.05" value="${state.speed||0.9}">
+      <div class="num" id="setSpdN">${(state.speed||0.9).toFixed(2)}×</div>
+    </div>
+    <div class="setrow">
+      <div class="lbl"><b>Autoplay audio</b><span>Play the sentence automatically when a card appears</span></div>
+      <input type="checkbox" id="setAuto" ${state.autoplay!==false?'checked':''} style="width:22px;height:22px">
+    </div>
+    <div class="setrow">
+      <div class="lbl"><b>Voice (fallback)</b><span>Browser voice used when a clip is missing</span></div>
+      <select id="setVoice" style="max-width:200px"></select>
+    </div>
+    <div class="secttitle">Data</div>
+    <div class="setrow" style="gap:10px; flex-wrap:wrap">
+      <button class="iconbtn" id="setExport">⬇ Export progress</button>
+      <button class="iconbtn" id="setImport">⬆ Import progress</button>
+      <button class="iconbtn" id="setReset" style="color:var(--again)">⟳ Reset progress</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Progress auto-saves on this device. Export to back up or move to another device.</div>`);
+  const sn=document.getElementById('setNew'), snN=document.getElementById('setNewN');
+  sn.oninput=()=>{ state.newPerDay=+sn.value; snN.textContent=sn.value; save(); statsLine(); };
+  const sp=document.getElementById('setSpd'), spN=document.getElementById('setSpdN');
+  sp.oninput=()=>{ state.speed=+sp.value; spN.textContent=(+sp.value).toFixed(2)+'×'; save(); };
+  document.getElementById('setAuto').onchange=e=>{ state.autoplay=e.target.checked; save(); };
+  fillVoiceSelect(document.getElementById('setVoice'));
+  document.getElementById('setExport').onclick=exportProgress;
+  document.getElementById('setImport').onclick=importProgress;
+  document.getElementById('setReset').onclick=resetProgress;
+};
+
+// ================= stats dashboard =================
+document.getElementById('statsBtn').onclick = ()=>{
+  const t=now();
+  let learned=0, mature=0, learning=0, neu=0, dueNow=0, easeSum=0, leeches=0;
+  for(const c of CARDS){
+    const s=state.cards[c.id];
+    if(s.lapses>=4) leeches++;
+    if(s.reps===0){ neu++; continue; }
+    learned++; easeSum+=s.ease;
+    if(s.due<=t) dueNow++;
+    if(s.intervalD>=21) mature++; else learning++;
+  }
+  const log=state.log||{};
+  const days=[]; for(let i=13;i>=0;i--){ const k=dayKey(t-i*DAY); const d=log[k]||{reviews:0,again:0}; days.push({k,rev:d.reviews}); }
+  const maxRev=Math.max(1,...days.map(d=>d.rev));
+  let rev30=0, again30=0;
+  for(let i=0;i<30;i++){ const d=log[dayKey(t-i*DAY)]; if(d){ rev30+=d.reviews; again30+=d.again; } }
+  const retention = rev30? Math.round((1-again30/rev30)*100) : null;
+  const revToday = (log[dayKey(t)]||{reviews:0}).reviews;
+  const fc=[0,0,0,0,0,0,0];
+  for(const c of CARDS){ const s=state.cards[c.id]; if(s.reps===0) continue; const dd=Math.ceil((s.due-t)/DAY); if(dd>=0&&dd<7) fc[dd]++; }
+  const maxFc=Math.max(1,...fc);
+  const avgEase = learned? (easeSum/learned).toFixed(2) : '–';
+
+  const barsRev = days.map(d=>`<div class="bar"><div class="val">${d.rev||''}</div><div class="fill" style="height:${Math.round(d.rev/maxRev*70)}%"></div><div class="cap">${d.k.slice(5)}</div></div>`).join('');
+  const barsFc = fc.map((n,i)=>`<div class="bar future"><div class="val">${n||''}</div><div class="fill" style="height:${Math.round(n/maxFc*70)}%"></div><div class="cap">${i===0?'today':'+'+i+'d'}</div></div>`).join('');
+  const pct=n=>learned? (n/TOTAL*100):0;
+  const matbar = `<div class="matbar">
+      <div style="background:var(--good);width:${pct(mature)}%" title="Mature">${mature>140?mature:''}</div>
+      <div style="background:var(--hard);width:${pct(learning)}%" title="Learning">${learning>140?learning:''}</div>
+      <div style="background:var(--panel2);color:var(--muted);width:${neu/TOTAL*100}%" title="New">${neu>400?neu:''}</div>
+    </div>
+    <div style="display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:6px">
+      <span><span style="color:var(--good)">■</span> Mature ${mature}</span>
+      <span><span style="color:var(--hard)">■</span> Learning ${learning}</span>
+      <span><span style="color:var(--muted)">■</span> New ${neu}</span>
+    </div>`;
+
+  openModal('Statistics', `
+    <div class="statgrid">
+      <div class="stat"><div class="n">${learned}<span style="font-size:14px;color:var(--muted)">/${TOTAL}</span></div><div class="l">Sentences learned</div></div>
+      <div class="stat"><div class="n good">${mature}</div><div class="l">Mature (≥21d)</div></div>
+      <div class="stat"><div class="n warn">${dueNow}</div><div class="l">Due now</div></div>
+      <div class="stat"><div class="n acc">${retention===null?'–':retention+'%'}</div><div class="l">Retention (30d)</div></div>
+      <div class="stat"><div class="n">${revToday}</div><div class="l">Reviews today</div></div>
+      <div class="stat"><div class="n">${avgEase}</div><div class="l">Avg ease</div></div>
+      <div class="stat"><div class="n">${state.streak.count||0}</div><div class="l">Day streak 🔥</div></div>
+      <div class="stat"><div class="n ${leeches?'warn':''}">${leeches}</div><div class="l">Leeches (4+ lapses)</div></div>
+    </div>
+    <div class="secttitle">Collection</div>
+    ${matbar}
+    <div class="secttitle">Reviews — last 14 days</div>
+    <div class="bars">${barsRev}</div>
+    <div class="secttitle">Due forecast — next 7 days</div>
+    <div class="bars">${barsFc}</div>
+    ${leeches?`<div class="cramwrap" style="margin-top:18px"><button class="iconbtn" id="studyLeeches">Study ${leeches} leech${leeches>1?'es':''} now</button></div>`:''}
+  `);
+  const lb=document.getElementById('studyLeeches');
+  if(lb) lb.onclick=()=>{ const set=CARDS.filter(c=>(state.cards[c.id].lapses||0)>=4); startCram(set,'Leeches'); };
+};
+
+// ================= browse / search / cram =================
+document.getElementById('browseBtn').onclick = openBrowse;
+function openBrowse(){
+  openModal('Browse &amp; Search', `
+    <div class="browsebar">
+      <input type="text" id="bq" placeholder="Search Spanish or English…" autocomplete="off">
+      <select id="bstatus"><option value="">All status</option><option value="new">New</option><option value="learn">Learning</option><option value="mature">Mature</option><option value="due">Due</option></select>
+    </div>
+    <div class="browsecount" id="bcount"></div>
+    <div class="cramwrap" style="margin-bottom:12px"><button class="iconbtn" id="cramBtn">▶ Cram these (no scheduling)</button></div>
+    <div class="blist" id="blist"></div>`);
+  const q=document.getElementById('bq'), st=document.getElementById('bstatus');
+  let shown=[];
+  function matches(){
+    const term=q.value.trim().toLowerCase(), s=st.value;
+    shown = CARDS.filter(c=>{
+      if(s && cardStatus(c).key!==s) return false;
+      if(!term) return true;
+      return (c.es+' '+c.en).toLowerCase().includes(term);
+    });
+    return shown;
+  }
+  function draw(){
+    const list=matches();
+    document.getElementById('bcount').textContent = list.length+' sentence'+(list.length===1?'':'s');
+    document.getElementById('blist').innerHTML = list.slice(0,400).map(c=>{
+      const stt=cardStatus(c);
+      return `<div class="brow" data-id="${c.id}">
+        <div class="browtop">
+          <button class="miniplay" data-id="${c.id}" title="Play">▶</button>
+          <span class="bes">${esc(c.es)}</span>
+          <span class="badge ${stt.key}">${stt.label}</span>
+        </div>
+        <div class="bdetail"><div class="bex"><div class="en">${esc(c.en)}</div></div></div>
+      </div>`;
+    }).join('') + (list.length>400?'<div class="browsecount">Showing first 400 — refine your search.</div>':'');
+    document.querySelectorAll('#blist .brow').forEach(r=>{
+      r.onclick=e=>{ if(e.target.closest('.miniplay')) return; r.classList.toggle('open'); };
+    });
+    document.querySelectorAll('#blist .miniplay').forEach(b=> b.onclick=()=>{
+      const c=CARDS[+b.dataset.id]; playCard(c, b);
+    });
+  }
+  q.oninput=draw; st.onchange=draw;
+  document.getElementById('cramBtn').onclick=()=>{ if(shown.length) startCram(shown.slice(),'Cram'); };
+  draw(); q.focus();
+}
+
+// cram: flip-through of a fixed set, no SRS changes
+function startCram(set, label){
+  let i=0, flip=false;
+  function show(){
+    const c=set[i];
+    if(!flip){
+      modalBox.querySelector('#modalBody').innerHTML = `
+        <div class="cramwrap" style="color:var(--muted);font-size:12px;margin-bottom:14px">${label} · ${i+1} / ${set.length}</div>
+        <div class="card" style="box-shadow:none;border:none;background:transparent">
+          <div class="cardtop"><div class="sentence">${esc(c.es)}</div><span class="tap">tap to reveal</span></div>
+          <div class="playrow"><button class="play" id="cramPlay">▶</button></div>
+          <div class="controls"><button class="show" id="cramShow">Show answer</button></div>
+        </div>`;
+      modalBox.querySelector('#cramShow').onclick=()=>{ flip=true; show(); };
+      modalBox.querySelector('#cramPlay').onclick=()=> playCard(c, modalBox.querySelector('#cramPlay'));
+      if(state.autoplay!==false) playCard(c, modalBox.querySelector('#cramPlay'));
+    } else {
+      modalBox.querySelector('#modalBody').innerHTML = `
+        <div class="cramwrap" style="color:var(--muted);font-size:12px;margin-bottom:14px">${label} · ${i+1} / ${set.length}</div>
+        <div class="card" style="box-shadow:none;border:none;background:transparent">
+          <div class="cardtop" style="padding-bottom:6px"><div class="sentence" style="font-size:24px">${esc(c.es)}</div></div>
+          <div class="playrow"><button class="play" id="cramPlay">▶</button></div>
+          <div class="divider"></div><div class="trans">${esc(c.en)}</div>
+          <div class="controls">
+            <button class="iconbtn" id="cramPrev" ${i===0?'disabled':''}>← Prev</button>
+            <button class="iconbtn" id="cramNext">${i===set.length-1?'Done':'Next →'}</button>
+          </div>
+        </div>`;
+      modalBox.querySelector('#cramPlay').onclick=()=> playCard(c, modalBox.querySelector('#cramPlay'));
+      modalBox.querySelector('#cramPrev').onclick=()=>{ if(i>0){i--;flip=false;show();} };
+      modalBox.querySelector('#cramNext').onclick=()=>{ if(i<set.length-1){i++;flip=false;show();} else openBrowse(); };
+    }
+  }
+  openModal('Cram', '');
+  show();
+}
+
+// new-day session reset of sessionNew counter
+(function(){
+  const today=new Date().toDateString();
+  if(state.streak.last !== today){ state.sessionNew = 0; save(); }
+})();
+
+nextCard();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
