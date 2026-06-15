@@ -24,10 +24,11 @@ Intermediate/Advanced Sentences w/ Audio"* Anki deck.
 
 ## Card format
 
-Each card tests **production**: the English sentence is shown; you recall the Spanish, then
-reveal it — the Spanish sentence is displayed and read aloud (autoplay, toggleable). This is a
-sentence deck — there is no per-word vocabulary, part of speech, or definition; the sentence
-itself is the unit of study.
+By default each card tests **production**: the English sentence is shown; you recall the
+Spanish, then reveal it — the Spanish sentence is displayed and read aloud (autoplay,
+toggleable). A **Production mode** toggle in Settings flips this to **recognition** (see and
+hear the Spanish, recall the English). This is a sentence deck — there is no per-word
+vocabulary, part of speech, or definition; the sentence itself is the unit of study.
 
 ## Run it
 

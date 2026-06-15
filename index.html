@@ -193,7 +193,7 @@ function load(){
 function fresh(){
   const cards = {};
   CARDS.forEach(c => cards[c.id] = {id:c.id, ease:2.5, intervalD:0, reps:0, due:0, lapses:0});
-  return {cards, lastVoice:null, speed:0.9, newPerDay:20, autoplay:true, log:{}, streak:{count:0, last:null}, sessionNew:0};
+  return {cards, lastVoice:null, speed:0.9, newPerDay:20, autoplay:true, production:true, log:{}, streak:{count:0, last:null}, sessionNew:0};
 }
 function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
@@ -327,16 +327,32 @@ function render(){
     return;
   }
   const c = current;
+  const prod = state.production !== false;   // production: English prompt -> recall Spanish
   if(!flipped){
-    main.innerHTML = `
-    <div class="card" id="frontCard" style="cursor:pointer">
-      <div class="cardtop">
-        <div class="trans" style="margin:0">${esc(c.en)}</div>
-        <span class="tap">tap card to reveal the Spanish</span>
-      </div>
-      <div class="controls"><button class="show" id="showBtn">Show answer</button></div>
-    </div>`;
-    document.getElementById('frontCard').onclick = ()=> flip();
+    if(prod){
+      main.innerHTML = `
+      <div class="card" id="frontCard" style="cursor:pointer">
+        <div class="cardtop">
+          <div class="trans" style="margin:0">${esc(c.en)}</div>
+          <span class="tap">tap card to reveal the Spanish</span>
+        </div>
+        <div class="controls"><button class="show" id="showBtn">Show answer</button></div>
+      </div>`;
+      document.getElementById('frontCard').onclick = ()=> flip();
+    } else {
+      main.innerHTML = `
+      <div class="card" id="frontCard" style="cursor:pointer">
+        <div class="cardtop">
+          <div class="sentence">${esc(c.es)}</div>
+          <span class="tap">tap card to reveal the English · ▶ replays audio</span>
+        </div>
+        <div class="playrow"><button class="play" id="playBtn" title="Play (R)">▶</button></div>
+        <div class="controls"><button class="show" id="showBtn">Show answer</button></div>
+      </div>`;
+      document.getElementById('frontCard').onclick = e=>{ if(!e.target.closest('.play')) flip(); };
+      document.getElementById('playBtn').onclick = ()=> playCard(c, document.getElementById('playBtn'));
+      if(state.autoplay!==false) playCard(c, document.getElementById('playBtn'));
+    }
   } else {
     main.innerHTML = `
     <div class="card">
@@ -345,7 +361,7 @@ function render(){
       </div>
       <div class="playrow"><button class="play" id="playBtn" title="Play (R)">▶</button></div>
       <div class="divider"></div>
-      <div class="trans" style="font-size:18px;color:var(--muted)">${esc(c.en)}</div>
+      <div class="trans"${prod?' style="font-size:18px;color:var(--muted)"':''}>${esc(c.en)}</div>
       <div class="controls">
         <button class="grade g-again" data-q="0">Again<small>&lt;1m</small></button>
         <button class="grade g-hard" data-q="1">Hard<small id="iv1"></small></button>
@@ -356,7 +372,8 @@ function render(){
     document.getElementById('playBtn').onclick = ()=> playCard(c, document.getElementById('playBtn'));
     document.querySelectorAll('.grade').forEach(b=> b.onclick = ()=>{ grade(c, +b.dataset.q); nextCard(); });
     setIvPreview(c);
-    if(state.autoplay!==false) playCard(c, document.getElementById('playBtn'));   // play Spanish on reveal
+    // play Spanish on reveal only in production (in recognition it already played on the front)
+    if(prod && state.autoplay!==false) playCard(c, document.getElementById('playBtn'));
   }
 }
 function setIvPreview(c){
@@ -378,7 +395,7 @@ document.addEventListener('keydown', e=>{
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return;
   if(overlayEl.classList.contains('open')){ if(e.key==='Escape') closeModal(); return; }
   if(e.code==='Space'){ e.preventDefault(); if(current && !flipped) flip(); }
-  else if(e.key==='r'||e.key==='R'){ if(flipped && current) playCard(current, document.getElementById('playBtn')); }
+  else if(e.key==='r'||e.key==='R'){ if(current && (flipped || state.production===false)) playCard(current, document.getElementById('playBtn')); }
   else if(flipped && current && ['1','2','3','4'].includes(e.key)){ grade(current, +e.key-1); nextCard(); }
 });
 
@@ -444,7 +461,11 @@ document.getElementById('settingsBtn').onclick = ()=>{
       <div class="num" id="setSpdN">${(state.speed||0.9).toFixed(2)}×</div>
     </div>
     <div class="setrow">
-      <div class="lbl"><b>Autoplay audio</b><span>Play the sentence automatically when a card appears</span></div>
+      <div class="lbl"><b>Production mode</b><span>On: see English, recall the Spanish. Off: see &amp; hear the Spanish, recall the English.</span></div>
+      <input type="checkbox" id="setProd" ${state.production!==false?'checked':''} style="width:22px;height:22px">
+    </div>
+    <div class="setrow">
+      <div class="lbl"><b>Autoplay audio</b><span>Play the Spanish automatically when it is shown</span></div>
       <input type="checkbox" id="setAuto" ${state.autoplay!==false?'checked':''} style="width:22px;height:22px">
     </div>
     <div class="setrow">
@@ -462,6 +483,7 @@ document.getElementById('settingsBtn').onclick = ()=>{
   sn.oninput=()=>{ state.newPerDay=+sn.value; snN.textContent=sn.value; save(); statsLine(); };
   const sp=document.getElementById('setSpd'), spN=document.getElementById('setSpdN');
   sp.oninput=()=>{ state.speed=+sp.value; spN.textContent=(+sp.value).toFixed(2)+'×'; save(); };
+  document.getElementById('setProd').onchange=e=>{ state.production=e.target.checked; save(); flipped=false; render(); };
   document.getElementById('setAuto').onchange=e=>{ state.autoplay=e.target.checked; save(); };
   fillVoiceSelect(document.getElementById('setVoice'));
   document.getElementById('setExport').onclick=exportProgress;
@@ -583,28 +605,34 @@ function startCram(set, label){
   let i=0, flip=false;
   function show(){
     const c=set[i];
+    const prod = state.production !== false;
     if(!flip){
+      const frontHtml = prod
+        ? `<div class="cardtop"><div class="trans" style="margin:0">${esc(c.en)}</div><span class="tap">tap to reveal the Spanish</span></div>
+           <div class="controls"><button class="show" id="cramShow">Show answer</button></div>`
+        : `<div class="cardtop"><div class="sentence">${esc(c.es)}</div><span class="tap">tap to reveal the English</span></div>
+           <div class="playrow"><button class="play" id="cramPlay">▶</button></div>
+           <div class="controls"><button class="show" id="cramShow">Show answer</button></div>`;
       modalBox.querySelector('#modalBody').innerHTML = `
         <div class="cramwrap" style="color:var(--muted);font-size:12px;margin-bottom:14px">${label} · ${i+1} / ${set.length}</div>
-        <div class="card" style="box-shadow:none;border:none;background:transparent">
-          <div class="cardtop"><div class="trans" style="margin:0">${esc(c.en)}</div><span class="tap">tap to reveal the Spanish</span></div>
-          <div class="controls"><button class="show" id="cramShow">Show answer</button></div>
-        </div>`;
+        <div class="card" style="box-shadow:none;border:none;background:transparent">${frontHtml}</div>`;
       modalBox.querySelector('#cramShow').onclick=()=>{ flip=true; show(); };
+      const cp=modalBox.querySelector('#cramPlay');
+      if(cp){ cp.onclick=()=> playCard(c, cp); if(state.autoplay!==false) playCard(c, cp); }   // recognition: play Spanish on front
     } else {
       modalBox.querySelector('#modalBody').innerHTML = `
         <div class="cramwrap" style="color:var(--muted);font-size:12px;margin-bottom:14px">${label} · ${i+1} / ${set.length}</div>
         <div class="card" style="box-shadow:none;border:none;background:transparent">
           <div class="cardtop"><div class="sentence">${esc(c.es)}</div></div>
           <div class="playrow"><button class="play" id="cramPlay">▶</button></div>
-          <div class="divider"></div><div class="trans" style="font-size:18px;color:var(--muted)">${esc(c.en)}</div>
+          <div class="divider"></div><div class="trans"${prod?' style="font-size:18px;color:var(--muted)"':''}>${esc(c.en)}</div>
           <div class="controls">
             <button class="iconbtn" id="cramPrev" ${i===0?'disabled':''}>← Prev</button>
             <button class="iconbtn" id="cramNext">${i===set.length-1?'Done':'Next →'}</button>
           </div>
         </div>`;
       modalBox.querySelector('#cramPlay').onclick=()=> playCard(c, modalBox.querySelector('#cramPlay'));
-      if(state.autoplay!==false) playCard(c, modalBox.querySelector('#cramPlay'));   // play Spanish on reveal
+      if(prod && state.autoplay!==false) playCard(c, modalBox.querySelector('#cramPlay'));   // production: play Spanish on reveal
       modalBox.querySelector('#cramPrev').onclick=()=>{ if(i>0){i--;flip=false;show();} };
       modalBox.querySelector('#cramNext').onclick=()=>{ if(i<set.length-1){i++;flip=false;show();} else openBrowse(); };
     }
